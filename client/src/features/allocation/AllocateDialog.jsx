@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
-import { api, apiError } from '@/lib/api';
+import { apiError } from '@/lib/api';
 import { useAssets } from '@/features/assets/api';
 import { useEmployees, useDepartments } from '@/features/organization/api';
 import { useAllocationMutations } from './api';
@@ -30,11 +30,10 @@ export function AllocateDialog({ presetAssetId, onClose }) {
   const [conflict, setConflict] = useState(null);
   const [target, setTarget] = useState('user'); // user | department
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: { assetId: presetAssetId || '', toUserId: '', toDepartmentId: '', expectedReturnDate: '', reason: '' },
   });
 
-  const assetId = watch('assetId');
   const pending = allocate.isPending || createTransfer.isPending;
 
   async function onAllocate(values) {

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input, Select, Textarea } from '@/components/ui/input';
+import { Input, Select } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/feedback';
 import {
@@ -46,7 +46,7 @@ export function AssetFormDialog({ asset, onClose }) {
   const pending = create.isPending || update.isPending;
 
   async function onSubmit(values) {
-    const { files, customFieldValues, ...rest } = values;
+    const { customFieldValues, ...rest } = values;
     const fields = {
       ...rest,
       acquisitionCost: rest.acquisitionCost === '' ? undefined : rest.acquisitionCost,
