@@ -23,4 +23,7 @@ router.post(
   ctrl.transition
 );
 
+// Remove a request from the board (Asset Manager / Admin).
+router.delete('/:id', authenticate, requireRole(...APPROVERS), ctrl.remove);
+
 module.exports = router;

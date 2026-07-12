@@ -143,4 +143,25 @@ async function transition(id, payload, actorId) {
   });
 }
 
-module.exports = { list, create, transition };
+// Remove a maintenance request from the board. If it currently holds the asset
+// Under Maintenance, revert the asset to Available so it isn't left stuck.
+async function remove(id, actorId) {
+  return prisma.$transaction(async (tx) => {
+    const req = await tx.maintenanceRequest.findUnique({ where: { id }, include: { asset: true } });
+    if (!req) throw ApiError.notFound('Maintenance request not found');
+
+    const activeStatuses = ['APPROVED', 'TECHNICIAN_ASSIGNED', 'IN_PROGRESS'];
+    if (activeStatuses.includes(req.status) && req.asset.status === 'UNDER_MAINTENANCE') {
+      await tx.asset.update({ where: { id: req.assetId }, data: { status: 'AVAILABLE' } });
+    }
+
+    await tx.maintenanceRequest.delete({ where: { id } });
+    await logActivity(
+      { actorId, action: 'MAINTENANCE_DELETED', entityType: 'MaintenanceRequest', entityId: id, metadata: { assetTag: req.asset.assetTag } },
+      tx
+    );
+    return { success: true };
+  });
+}
+
+module.exports = { list, create, transition, remove };

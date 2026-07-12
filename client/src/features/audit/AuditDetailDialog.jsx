@@ -71,7 +71,7 @@ export function AuditDetailDialog({ cycleId, onClose }) {
                   </DialogDescription>
                 </div>
                 {!isClosed && (
-                  <RoleGate roles={['ADMIN']}>
+                  <RoleGate roles={['ADMIN', 'ASSET_MANAGER']}>
                     <Button size="sm" variant="danger" onClick={closeCycle} disabled={close.isPending}>
                       {close.isPending ? <Spinner /> : <Lock className="size-4" />} Close Cycle
                     </Button>

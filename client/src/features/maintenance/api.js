@@ -36,5 +36,10 @@ export function useMaintenanceMutations() {
     onSuccess: invalidate,
   });
 
-  return { create, transition };
+  const remove = useMutation({
+    mutationFn: (id) => api.delete(`/maintenance/${id}`).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+
+  return { create, transition, remove };
 }

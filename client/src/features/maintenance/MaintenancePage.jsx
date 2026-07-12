@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Check, X, UserCog, Play, CheckCircle2 } from 'lucide-react';
+import { Plus, Check, X, UserCog, Play, CheckCircle2, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { LoadingState, ErrorState, Spinner } from '@/components/ui/feedback';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, Textarea } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { apiError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
@@ -35,14 +36,27 @@ export default function MaintenancePage() {
   const [raising, setRaising] = useState(false);
   const [assigning, setAssigning] = useState(null);
   const [resolving, setResolving] = useState(null);
-  const { transition } = useMaintenanceMutations();
-  const { isManager } = useRole();
+  const [deleting, setDeleting] = useState(null);
+  const { transition, remove } = useMaintenanceMutations();
+  const { isAdmin, isAssetManager } = useRole();
+  // Per the PRD, only the Asset Manager (and Admin) approve/route maintenance.
+  const canApprove = isAdmin || isAssetManager;
   const toast = useToast();
 
   async function act(id, action, extra = {}) {
     try {
       await transition.mutateAsync({ id, action, ...extra });
       toast.success(`Request ${action.toLowerCase()}d`);
+    } catch (err) {
+      toast.error(apiError(err));
+    }
+  }
+
+  async function confirmDelete() {
+    try {
+      await remove.mutateAsync(deleting.id);
+      toast.success('Request removed from board');
+      setDeleting(null);
     } catch (err) {
       toast.error(apiError(err));
     }
@@ -79,10 +93,21 @@ export default function MaintenancePage() {
                   <p className="py-6 text-center text-xs text-fg-subtle">No items</p>
                 )}
                 {items.map((r) => (
-                  <div key={r.id} className="rounded-md border border-border bg-surface-2 p-3">
+                  <div key={r.id} className="group rounded-md border border-border bg-surface-2 p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <span className="font-mono text-xs text-accent">{r.asset.assetTag}</span>
-                      <PriorityBadge priority={r.priority} />
+                      <div className="flex items-center gap-1.5">
+                        <PriorityBadge priority={r.priority} />
+                        {canApprove && (
+                          <button
+                            onClick={() => setDeleting(r)}
+                            title="Remove from board"
+                            className="text-fg-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm font-medium text-fg">{r.asset.name}</p>
                     <p className="mt-0.5 line-clamp-2 text-xs text-fg-muted">{r.description}</p>
@@ -99,7 +124,7 @@ export default function MaintenancePage() {
                     )}
 
                     {/* Contextual actions per column (managers only) */}
-                    {isManager && (
+                    {canApprove && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {status === 'PENDING' && (
                           <>
@@ -139,6 +164,16 @@ export default function MaintenancePage() {
       <p className="mt-3 text-xs text-fg-subtle">
         Approving a card moves the asset to Under Maintenance; resolving returns it to Available.
       </p>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(v) => !v && setDeleting(null)}
+        onConfirm={confirmDelete}
+        loading={remove.isPending}
+        title={`Remove ${deleting?.asset?.assetTag} request?`}
+        description="This deletes the maintenance request. If the asset is under maintenance, it will revert to Available."
+        confirmLabel="Remove"
+      />
 
       {raising && <RaiseMaintenanceDialog onClose={() => setRaising(false)} />}
       {assigning && (

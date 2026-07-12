@@ -3,7 +3,7 @@ const service = require('./allocations.service');
 
 // Allocations
 const list = asyncHandler(async (req, res) => {
-  res.json({ allocations: await service.list(req.query) });
+  res.json({ allocations: await service.list(req.query, req.user) });
 });
 
 const allocate = asyncHandler(async (req, res) => {
@@ -16,7 +16,7 @@ const returnAllocation = asyncHandler(async (req, res) => {
 
 // Transfers
 const listTransfers = asyncHandler(async (req, res) => {
-  res.json({ transfers: await service.listTransfers(req.query) });
+  res.json({ transfers: await service.listTransfers(req.query, req.user) });
 });
 
 const createTransfer = asyncHandler(async (req, res) => {
@@ -24,7 +24,7 @@ const createTransfer = asyncHandler(async (req, res) => {
 });
 
 const decideTransfer = asyncHandler(async (req, res) => {
-  res.json({ transfer: await service.decideTransfer(req.params.id, req.body.decision, req.user.id) });
+  res.json({ transfer: await service.decideTransfer(req.params.id, req.body.decision, req.user) });
 });
 
 module.exports = { list, allocate, returnAllocation, listTransfers, createTransfer, decideTransfer };

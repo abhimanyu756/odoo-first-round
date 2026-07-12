@@ -133,7 +133,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions row */}
-      <RoleGate roles={['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']}>
+      <RoleGate roles={['ADMIN', 'ASSET_MANAGER']}>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={() => setDialog('allocate')}>
             <BookMarked className="size-4" /> Allocate Asset

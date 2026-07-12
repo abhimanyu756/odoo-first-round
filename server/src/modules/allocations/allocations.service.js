@@ -20,17 +20,30 @@ const TRANSFER_INCLUDE = {
 
 // ─── Allocations ───────────────────────────────────────────────
 
-async function list({ status, assetId, toUserId, overdue } = {}) {
-  const where = {};
-  if (status) where.status = status;
-  if (assetId) where.assetId = assetId;
-  if (toUserId) where.toUserId = toUserId;
+// Scope allocations to what a user may see (Employee: theirs; Dept Head: dept).
+function allocationScopeForUser(user) {
+  if (!user || user.role === 'ADMIN' || user.role === 'ASSET_MANAGER') return null;
+  if (user.role === 'DEPARTMENT_HEAD') {
+    const dept = user.departmentId ?? '__none__';
+    return { OR: [{ toDepartmentId: dept }, { toUser: { departmentId: dept } }] };
+  }
+  return { toUserId: user.id }; // Employee
+}
+
+async function list({ status, assetId, toUserId, overdue } = {}, user) {
+  const base = {};
+  if (status) base.status = status;
+  if (assetId) base.assetId = assetId;
+  if (toUserId) base.toUserId = toUserId;
   if (overdue) {
     // Include rows already flagged OVERDUE by the scheduler, plus any active
     // ones already past their expected return date.
-    where.status = { in: ['ACTIVE', 'OVERDUE'] };
-    where.expectedReturnDate = { lt: new Date() };
+    base.status = { in: ['ACTIVE', 'OVERDUE'] };
+    base.expectedReturnDate = { lt: new Date() };
   }
+  const scope = allocationScopeForUser(user);
+  const where = scope ? { AND: [base, scope] } : base;
+
   return prisma.allocation.findMany({
     where,
     include: ALLOC_INCLUDE,
@@ -147,12 +160,46 @@ async function returnAllocation(allocationId, { returnCondition, checkInNotes },
 
 // ─── Transfers ─────────────────────────────────────────────────
 
-async function listTransfers({ status } = {}) {
+// Scope transfers a user may see. Employee: ones they're involved in.
+// Dept Head: ones involving their department (from/to user or dept).
+function transferScopeForUser(user) {
+  if (!user || user.role === 'ADMIN' || user.role === 'ASSET_MANAGER') return null;
+  if (user.role === 'DEPARTMENT_HEAD') {
+    const dept = user.departmentId ?? '__none__';
+    return {
+      OR: [
+        { toDepartmentId: dept },
+        { fromUser: { departmentId: dept } },
+        { toUser: { departmentId: dept } },
+      ],
+    };
+  }
+  return {
+    OR: [{ requestedById: user.id }, { fromUserId: user.id }, { toUserId: user.id }],
+  };
+}
+
+async function listTransfers({ status } = {}, user) {
+  const base = status ? { status } : {};
+  const scope = transferScopeForUser(user);
+  const where = scope ? { AND: [base, scope] } : base;
   return prisma.transferRequest.findMany({
-    where: status ? { status } : undefined,
+    where,
     include: TRANSFER_INCLUDE,
     orderBy: { createdAt: 'desc' },
   });
+}
+
+// Does a transfer involve the given department? (for Dept Head approval scope)
+async function transferInvolvesDepartment(transfer, deptId) {
+  if (!deptId) return false;
+  if (transfer.toDepartmentId === deptId) return true;
+  const userIds = [transfer.fromUserId, transfer.toUserId].filter(Boolean);
+  if (userIds.length === 0) return false;
+  const count = await prisma.user.count({
+    where: { id: { in: userIds }, departmentId: deptId },
+  });
+  return count > 0;
 }
 
 async function createTransfer({ assetId, toUserId, toDepartmentId, reason }, actorId) {
@@ -182,7 +229,18 @@ async function createTransfer({ assetId, toUserId, toDepartmentId, reason }, act
 }
 
 /** Approve → close old allocation, open new one, move the asset. Reject → mark rejected. */
-async function decideTransfer(transferId, decision, actorId) {
+async function decideTransfer(transferId, decision, actor) {
+  const actorId = actor.id;
+  // Department Heads may only decide transfers involving their own department.
+  if (actor.role === 'DEPARTMENT_HEAD') {
+    const transfer = await prisma.transferRequest.findUnique({ where: { id: transferId } });
+    if (!transfer) throw ApiError.notFound('Transfer request not found');
+    const inScope = await transferInvolvesDepartment(transfer, actor.departmentId);
+    if (!inScope) {
+      throw ApiError.forbidden('You can only approve transfers involving your department');
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
     const transfer = await tx.transferRequest.findUnique({
       where: { id: transferId },

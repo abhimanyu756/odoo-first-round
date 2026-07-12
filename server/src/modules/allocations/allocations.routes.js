@@ -9,11 +9,14 @@ const {
   listAllocationsQuery,
 } = require('./allocations.schema');
 
-const MANAGERS = ['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD'];
+// Per the PRD, the Asset Manager registers/allocates assets and approves returns;
+// Department Heads approve transfer requests (see transfers.routes.js), not direct
+// allocation. So allocate + return are Asset Manager / Admin only.
+const ALLOCATORS = ['ADMIN', 'ASSET_MANAGER'];
 const router = Router();
 
 router.get('/', authenticate, validate(listAllocationsQuery, 'query'), ctrl.list);
-router.post('/', authenticate, requireRole(...MANAGERS), validate(allocateSchema), ctrl.allocate);
-router.post('/:id/return', authenticate, requireRole(...MANAGERS), validate(returnSchema), ctrl.returnAllocation);
+router.post('/', authenticate, requireRole(...ALLOCATORS), validate(allocateSchema), ctrl.allocate);
+router.post('/:id/return', authenticate, requireRole(...ALLOCATORS), validate(returnSchema), ctrl.returnAllocation);
 
 module.exports = router;

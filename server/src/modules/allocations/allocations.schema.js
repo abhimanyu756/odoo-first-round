@@ -22,7 +22,7 @@ const createTransferSchema = z
     assetId: z.string().cuid(),
     toUserId: z.string().cuid().nullish(),
     toDepartmentId: z.string().cuid().nullish(),
-    reason: z.string().trim().max(500).optional(),
+    reason: z.string().trim().max(500).nullish(),
   })
   .refine((d) => d.toUserId || d.toDepartmentId, {
     message: 'Choose a destination employee or department',

@@ -39,6 +39,12 @@ const hourFraction = (iso) => {
 };
 const fmt = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 const overlaps = (aS, aE, bS, bE) => aS < bE && aE > bS; // touching endpoints allowed
+// Add `mins` minutes to an "HH:MM" string, clamped to 23:59.
+function addMinutes(hhmm, mins) {
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = Math.min(h * 60 + m + mins, 23 * 60 + 59);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
 
 export default function BookingPage() {
   const [date, setDate] = useState(ymd(new Date()));
@@ -86,6 +92,9 @@ export default function BookingPage() {
         purpose: purpose || null,
       });
       toast.success('Booking confirmed');
+      // Advance the form to the next slot so it doesn't overlap what was just booked.
+      setStart(end);
+      setEnd(addMinutes(end, 60));
       setPurpose('');
     } catch (err) {
       toast.error(apiError(err));

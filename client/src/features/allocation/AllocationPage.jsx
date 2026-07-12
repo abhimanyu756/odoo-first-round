@@ -15,11 +15,15 @@ import { formatDate } from '@/lib/utils';
 import { useAllocations, useTransfers, useAllocationMutations } from './api';
 import { ReturnDialog } from './ReturnDialog';
 
+// Transfer approvers (Dept Head is dept-scoped on the backend).
 const MANAGERS = ['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD'];
+// Only the Asset Manager / Admin directly allocate and approve returns.
+const ALLOCATORS = ['ADMIN', 'ASSET_MANAGER'];
 
 export default function AllocationPage() {
   const [returning, setReturning] = useState(null);
-  const { isManager } = useRole();
+  const { isAdmin, isAssetManager } = useRole();
+  const canAllocate = isAdmin || isAssetManager;
 
   return (
     <div>
@@ -28,9 +32,9 @@ export default function AllocationPage() {
         description="Manage who holds what, with conflict handling."
       />
 
-      <Tabs defaultValue={isManager ? 'allocate' : 'active'}>
+      <Tabs defaultValue={canAllocate ? 'allocate' : 'active'}>
         <TabsList>
-          {isManager && (
+          {canAllocate && (
             <TabsTrigger value="allocate">
               <SquarePlus className="size-4" /> Allocate / Transfer
             </TabsTrigger>
@@ -41,7 +45,7 @@ export default function AllocationPage() {
           </TabsTrigger>
         </TabsList>
 
-        {isManager && (
+        {canAllocate && (
           <TabsContent value="allocate">
             <AllocateTransferPanel />
           </TabsContent>
@@ -103,7 +107,7 @@ function AllocationsTable({ onReturn }) {
                 <TD><AllocationStatusBadge status={overdue ? 'OVERDUE' : a.status} /></TD>
                 <TD>
                   <div className="flex justify-end">
-                    <RoleGate roles={MANAGERS}>
+                    <RoleGate roles={ALLOCATORS}>
                       <Button variant="outline" size="sm" onClick={() => onReturn(a)}>
                         <RotateCcw className="size-4" /> Return
                       </Button>

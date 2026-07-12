@@ -9,22 +9,42 @@ const LIST_INCLUDE = {
   currentDepartment: { select: { id: true, name: true } },
 };
 
-async function list(filters = {}) {
+// Restrict which assets a user may see:
+//  - Admin / Asset Manager: everything
+//  - Department Head: assets in their department (+ any shared/bookable resource)
+//  - Employee: assets currently allocated to them (+ any shared/bookable resource)
+// Bookable resources stay visible to all so everyone can book them.
+function assetScopeForUser(user) {
+  if (!user || user.role === 'ADMIN' || user.role === 'ASSET_MANAGER') return null;
+  const clauses = [{ isBookable: true }];
+  if (user.role === 'DEPARTMENT_HEAD') {
+    clauses.push({ currentDepartmentId: user.departmentId ?? '__none__' });
+  } else {
+    clauses.push({ currentHolderId: user.id });
+  }
+  return { OR: clauses };
+}
+
+async function list(filters = {}, user) {
   const { search, categoryId, status, departmentId, location, isBookable } = filters;
-  const where = {};
-  if (categoryId) where.categoryId = categoryId;
-  if (status) where.status = status;
-  if (departmentId) where.currentDepartmentId = departmentId;
-  if (location) where.location = { contains: location, mode: 'insensitive' };
-  if (isBookable !== undefined) where.isBookable = isBookable;
+  const base = {};
+  if (categoryId) base.categoryId = categoryId;
+  if (status) base.status = status;
+  if (departmentId) base.currentDepartmentId = departmentId;
+  if (location) base.location = { contains: location, mode: 'insensitive' };
+  if (isBookable !== undefined) base.isBookable = isBookable;
   if (search) {
-    where.OR = [
+    base.OR = [
       { name: { contains: search, mode: 'insensitive' } },
       { assetTag: { contains: search, mode: 'insensitive' } },
       { serialNumber: { contains: search, mode: 'insensitive' } },
       { qrCode: { contains: search, mode: 'insensitive' } },
     ];
   }
+
+  const scope = assetScopeForUser(user);
+  const where = scope ? { AND: [base, scope] } : base;
+
   return prisma.asset.findMany({ where, include: LIST_INCLUDE, orderBy: { createdAt: 'desc' } });
 }
 

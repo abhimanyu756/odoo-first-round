@@ -15,4 +15,8 @@ const transition = asyncHandler(async (req, res) => {
   res.json({ request: await service.transition(req.params.id, req.body, req.user.id) });
 });
 
-module.exports = { list, create, transition };
+const remove = asyncHandler(async (req, res) => {
+  res.json(await service.remove(req.params.id, req.user.id));
+});
+
+module.exports = { list, create, transition, remove };

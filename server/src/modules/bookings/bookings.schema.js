@@ -6,7 +6,7 @@ const createBookingSchema = z
     startTime: z.coerce.date(),
     endTime: z.coerce.date(),
     forDepartmentId: z.string().cuid().nullish(),
-    purpose: z.string().trim().max(300).optional(),
+    purpose: z.string().trim().max(300).nullish(),
   })
   .refine((d) => d.endTime > d.startTime, {
     message: 'End time must be after start time',

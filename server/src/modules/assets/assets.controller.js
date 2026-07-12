@@ -11,7 +11,7 @@ function filesToDocuments(files = []) {
 }
 
 const list = asyncHandler(async (req, res) => {
-  res.json({ assets: await service.list(req.query) });
+  res.json({ assets: await service.list(req.query, req.user) });
 });
 
 const getOne = asyncHandler(async (req, res) => {
