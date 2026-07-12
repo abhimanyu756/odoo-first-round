@@ -96,21 +96,8 @@ export function AssetDetailDialog({ assetId, onClose, onEdit }) {
                 {/* Documents */}
                 {data.asset.documents?.length > 0 && (
                   <div className="mt-4">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-fg-subtle">Documents</p>
-                    <div className="flex flex-wrap gap-2">
-                      {data.asset.documents.map((doc) => (
-                        <a
-                          key={doc.id}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-fg-muted hover:text-fg"
-                        >
-                          {doc.kind === 'PHOTO' ? <ImageIcon className="size-3.5" /> : <FileText className="size-3.5" />}
-                          {doc.kind === 'PHOTO' ? 'Photo' : 'Document'}
-                        </a>
-                      ))}
-                    </div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-fg-subtle">Photos & Documents</p>
+                    <DocumentGallery documents={data.asset.documents} />
                   </div>
                 )}
               </TabsContent>

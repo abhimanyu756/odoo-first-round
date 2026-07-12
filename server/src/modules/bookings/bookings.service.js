@@ -90,7 +90,6 @@ async function reschedule(id, { startTime, endTime }, actorId) {
   const booking = await prisma.booking.findUnique({ where: { id }, include: { asset: true } });
   if (!booking) throw ApiError.notFound('Booking not found');
   if (booking.status === 'CANCELLED') throw ApiError.badRequest('Cannot reschedule a cancelled booking');
-  if (booking.status === 'COMPLETED') throw ApiError.badRequest('Cannot reschedule a completed booking');
 
   const conflict = await findConflict(booking.assetId, startTime, endTime, id);
   if (conflict) {

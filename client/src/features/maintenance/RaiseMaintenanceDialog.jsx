@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, Textarea } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/feedback';
+import { FilePreview } from '@/components/ui/file-preview';
 import {
   Dialog,
   DialogContent,
@@ -22,9 +23,10 @@ export function RaiseMaintenanceDialog({ presetAssetId, onClose }) {
   const { data: assets } = useAssets({});
   const { create } = useMaintenanceMutations();
   const toast = useToast();
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: { assetId: presetAssetId || '', description: '', priority: 'MEDIUM' },
   });
+  const selectedPhoto = watch('photo');
 
   async function onSubmit(values) {
     try {
@@ -76,6 +78,7 @@ export function RaiseMaintenanceDialog({ presetAssetId, onClose }) {
               <span>Attach a photo</span>
               <input type="file" accept="image/*" className="hidden" {...register('photo')} />
             </label>
+            <FilePreview files={selectedPhoto} />
           </Field>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>

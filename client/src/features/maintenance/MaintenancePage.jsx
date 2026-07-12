@@ -86,6 +86,11 @@ export default function MaintenancePage() {
                     </div>
                     <p className="text-sm font-medium text-fg">{r.asset.name}</p>
                     <p className="mt-0.5 line-clamp-2 text-xs text-fg-muted">{r.description}</p>
+                    {r.photoUrl && (
+                      <a href={r.photoUrl} target="_blank" rel="noreferrer">
+                        <img src={r.photoUrl} alt="issue" className="mt-2 h-20 w-full rounded-md border border-border object-cover hover:opacity-80" />
+                      </a>
+                    )}
                     <p className="mt-2 text-[11px] text-fg-subtle">
                       by {r.raisedBy?.name} · {formatDate(r.createdAt)}
                     </p>

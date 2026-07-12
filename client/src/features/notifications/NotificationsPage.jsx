@@ -17,8 +17,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 import { LoadingState, EmptyState } from '@/components/ui/feedback';
 import { RoleGate } from '@/components/auth/guards';
+import { useState } from 'react';
 import { cn, timeAgo, formatDateTime } from '@/lib/utils';
 import { useNotifications, useNotificationMutations, useActivityLog } from './api';
+
+// Group notification types into the filter chips from the mockup.
+const CATEGORIES = {
+  Alerts: ['OVERDUE_RETURN', 'MAINTENANCE_REJECTED', 'TRANSFER_REJECTED', 'BOOKING_REMINDER', 'AUDIT_DISCREPANCY'],
+  Approvals: ['MAINTENANCE_APPROVED', 'MAINTENANCE_ASSIGNED', 'MAINTENANCE_RESOLVED', 'TRANSFER_APPROVED', 'ROLE_CHANGED', 'ASSET_ASSIGNED'],
+  Bookings: ['BOOKING_CONFIRMED', 'BOOKING_CANCELLED', 'BOOKING_REMINDER'],
+};
+const FILTERS = ['All', 'Alerts', 'Approvals', 'Bookings'];
 
 const ICONS = {
   ASSET_ASSIGNED: PackageCheck,
@@ -73,26 +82,44 @@ export default function NotificationsPage() {
 function NotificationList() {
   const { data, isLoading } = useNotifications();
   const { markRead, markAllRead } = useNotificationMutations();
+  const [filter, setFilter] = useState('All');
 
   if (isLoading) return <LoadingState />;
 
+  const filtered =
+    filter === 'All' ? data : data.filter((n) => CATEGORIES[filter]?.includes(n.type));
   const hasUnread = data.some((n) => !n.isRead);
 
   return (
     <Card className="p-2">
-      <div className="flex items-center justify-between px-2 py-2">
-        <span className="text-sm text-fg-muted">{data.length} notifications</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-2">
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                filter === f
+                  ? 'border-primary/40 bg-primary/15 text-primary-hover'
+                  : 'border-border text-fg-muted hover:bg-surface-2'
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
         {hasUnread && (
           <Button variant="ghost" size="sm" onClick={() => markAllRead.mutate()}>
             <CheckCheck className="size-4" /> Mark all read
           </Button>
         )}
       </div>
-      {data.length === 0 ? (
-        <EmptyState icon={Bell} title="No notifications" description="You're all caught up." />
+      {filtered.length === 0 ? (
+        <EmptyState icon={Bell} title="No notifications" description={filter === 'All' ? "You're all caught up." : `No ${filter.toLowerCase()} notifications.`} />
       ) : (
         <div className="space-y-1">
-          {data.map((n) => {
+          {filtered.map((n) => {
             const Icon = ICONS[n.type] || Bell;
             return (
               <button

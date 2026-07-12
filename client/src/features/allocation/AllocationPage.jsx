@@ -1,48 +1,51 @@
 import { useState } from 'react';
-import { Plus, ArrowLeftRight, RotateCcw, Check, X, PackageOpen } from 'lucide-react';
+import { ArrowLeftRight, RotateCcw, Check, X, PackageOpen, SquarePlus } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { AllocateTransferPanel } from './AllocateTransferPanel';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 import { LoadingState, ErrorState, EmptyState, Spinner } from '@/components/ui/feedback';
 import { Badge } from '@/components/ui/badge';
 import { AllocationStatusBadge, TransferStatusBadge } from '@/components/StatusBadge';
-import { RoleGate } from '@/components/auth/guards';
+import { RoleGate, useRole } from '@/components/auth/guards';
 import { useToast } from '@/components/ui/toast';
 import { apiError } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { useAllocations, useTransfers, useAllocationMutations } from './api';
-import { AllocateDialog } from './AllocateDialog';
 import { ReturnDialog } from './ReturnDialog';
 
 const MANAGERS = ['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD'];
 
 export default function AllocationPage() {
-  const [allocating, setAllocating] = useState(false);
   const [returning, setReturning] = useState(null);
+  const { isManager } = useRole();
 
   return (
     <div>
       <PageHeader
         title="Allocation & Transfer"
         description="Manage who holds what, with conflict handling."
-        actions={
-          <RoleGate roles={MANAGERS}>
-            <Button onClick={() => setAllocating(true)}>
-              <Plus /> Allocate Asset
-            </Button>
-          </RoleGate>
-        }
       />
 
-      <Tabs defaultValue="active">
+      <Tabs defaultValue={isManager ? 'allocate' : 'active'}>
         <TabsList>
+          {isManager && (
+            <TabsTrigger value="allocate">
+              <SquarePlus className="size-4" /> Allocate / Transfer
+            </TabsTrigger>
+          )}
           <TabsTrigger value="active">Active Allocations</TabsTrigger>
           <TabsTrigger value="transfers">
             <ArrowLeftRight className="size-4" /> Transfers
           </TabsTrigger>
         </TabsList>
 
+        {isManager && (
+          <TabsContent value="allocate">
+            <AllocateTransferPanel />
+          </TabsContent>
+        )}
         <TabsContent value="active">
           <AllocationsTable onReturn={setReturning} />
         </TabsContent>
@@ -51,7 +54,6 @@ export default function AllocationPage() {
         </TabsContent>
       </Tabs>
 
-      {allocating && <AllocateDialog onClose={() => setAllocating(false)} />}
       {returning && <ReturnDialog allocation={returning} onClose={() => setReturning(null)} />}
     </div>
   );
