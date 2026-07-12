@@ -7,7 +7,15 @@ import { LoadingState } from '@/components/ui/feedback';
 import LoginPage from '@/features/auth/LoginPage';
 import SignupPage from '@/features/auth/SignupPage';
 import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage';
-import Placeholder from '@/features/Placeholder';
+import OrganizationPage from '@/features/organization/OrganizationPage';
+import AssetsPage from '@/features/assets/AssetsPage';
+import AllocationPage from '@/features/allocation/AllocationPage';
+import BookingPage from '@/features/booking/BookingPage';
+import MaintenancePage from '@/features/maintenance/MaintenancePage';
+import AuditPage from '@/features/audit/AuditPage';
+import NotificationsPage from '@/features/notifications/NotificationsPage';
+import DashboardPage from '@/features/dashboard/DashboardPage';
+import ReportsPage from '@/features/dashboard/ReportsPage';
 
 // Redirect authenticated users away from auth pages.
 function PublicOnly({ children }) {
@@ -26,20 +34,20 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route path="/" element={<Placeholder title="Dashboard" description="Operational snapshot" />} />
-          <Route path="/assets" element={<Placeholder title="Assets" description="Asset registration & directory" />} />
-          <Route path="/allocation" element={<Placeholder title="Allocation & Transfer" description="Who holds what" />} />
-          <Route path="/booking" element={<Placeholder title="Resource Booking" description="Time-slot booking" />} />
-          <Route path="/maintenance" element={<Placeholder title="Maintenance" description="Approval workflow" />} />
-          <Route path="/audit" element={<Placeholder title="Audit" description="Verification cycles" />} />
-          <Route path="/notifications" element={<Placeholder title="Notifications" description="Activity & alerts" />} />
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/allocation" element={<AllocationPage />} />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/audit" element={<AuditPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           <Route element={<ProtectedRoute roles={['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']} />}>
-            <Route path="/reports" element={<Placeholder title="Reports & Analytics" description="Operational insight" />} />
+            <Route path="/reports" element={<ReportsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-            <Route path="/organization" element={<Placeholder title="Organization Setup" description="Master data" />} />
+            <Route path="/organization" element={<OrganizationPage />} />
           </Route>
         </Route>
       </Route>
