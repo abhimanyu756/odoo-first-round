@@ -9,7 +9,6 @@ import { BookingStatusBadge } from '@/components/StatusBadge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { apiError } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { useAssets } from '@/features/assets/api';
 import { useBookings, useBookingMutations } from './api';
 import { BookSlotDialog } from './BookSlotDialog';
