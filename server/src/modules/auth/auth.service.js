@@ -4,6 +4,7 @@ const prisma = require('../../config/prisma');
 const env = require('../../config/env');
 const ApiError = require('../../utils/ApiError');
 const { logActivity } = require('../../utils/activityLogger');
+const { sendMail } = require('../../utils/mailer');
 
 const PUBLIC_USER = {
   id: true,
@@ -56,18 +57,44 @@ async function getProfile(userId) {
   return user;
 }
 
-// Dev-friendly forgot-password: issues a short-lived reset token.
-// In production this token would be emailed, never returned in the response.
+// Issues a short-lived reset token and emails a reset link to the user.
 async function forgotPassword({ email }) {
   const user = await prisma.user.findUnique({ where: { email } });
   // Always report success to avoid leaking which emails exist.
-  if (!user) return { emailed: false, resetToken: null };
+  if (!user) return { emailed: false, resetToken: null, previewUrl: null };
 
   const resetToken = jwt.sign({ sub: user.id, kind: 'reset' }, env.jwt.accessSecret, {
     expiresIn: '30m',
   });
+  const resetUrl = `${env.clientOrigin}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
-  return { emailed: false, resetToken: env.isProd ? null : resetToken };
+  let previewUrl = null;
+  try {
+    const result = await sendMail({
+      to: user.email,
+      subject: 'Reset your AssetFlow password',
+      text: `Reset your password using this link (valid 30 min): ${resetUrl}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto">
+          <h2 style="color:#10b981">AssetFlow</h2>
+          <p>Hi ${user.name},</p>
+          <p>We received a request to reset your password. This link is valid for 30 minutes:</p>
+          <p><a href="${resetUrl}" style="display:inline-block;background:#10b981;color:#04120c;
+             padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">
+             Reset password</a></p>
+          <p style="color:#888;font-size:12px">If you didn't request this, you can ignore this email.</p>
+        </div>`,
+    });
+    previewUrl = result.previewUrl;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[forgotPassword] email send failed:', err.message);
+  }
+
+  await logActivity({ actorId: user.id, action: 'PASSWORD_RESET_REQUESTED', entityType: 'User', entityId: user.id });
+
+  // previewUrl (Ethereal) is returned only in dev so the tester can open the email.
+  return { emailed: true, previewUrl: env.isProd ? null : previewUrl, resetToken: env.isProd ? null : resetToken };
 }
 
 async function resetPassword({ token, password }) {

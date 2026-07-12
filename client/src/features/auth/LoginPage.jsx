@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AuthLayout } from './AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Field } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/feedback';
 import { useAuth } from '@/context/AuthContext';
@@ -57,7 +58,7 @@ export default function LoginPage() {
           <Input id="email" type="email" placeholder="name@company.com" {...register('email')} />
         </Field>
         <Field label="Password" htmlFor="password" error={errors.password?.message}>
-          <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+          <PasswordInput id="password" placeholder="••••••••" {...register('password')} />
         </Field>
 
         <div className="flex justify-end">

@@ -1,14 +1,16 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Bell, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { Bell, LogOut, Menu, ChevronDown, Sun, Moon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { RoleBadge } from '@/components/StatusBadge';
 import { cn } from '@/lib/utils';
 
 export function Topbar({ title, onMenu }) {
   const { user, logout } = useAuth();
+  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
 
   const { data: unread = 0 } = useQuery({
@@ -46,6 +48,14 @@ export function Topbar({ title, onMenu }) {
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          onClick={toggle}
+          aria-label="Toggle theme"
+          className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
+        >
+          {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        </button>
+
         <Link
           to="/notifications"
           className="relative rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"

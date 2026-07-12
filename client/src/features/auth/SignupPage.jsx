@@ -7,6 +7,7 @@ import { Info } from 'lucide-react';
 import { AuthLayout } from './AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput, PasswordChecklist, PASSWORD_POLICY } from '@/components/ui/password-input';
 import { Field } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/feedback';
 import { useAuth } from '@/context/AuthContext';
@@ -15,7 +16,7 @@ import { apiError } from '@/lib/api';
 const schema = z.object({
   name: z.string().min(2, 'Enter your full name'),
   email: z.string().email('Enter a valid email'),
-  password: z.string().min(8, 'At least 8 characters'),
+  password: z.string().regex(PASSWORD_POLICY.regex, PASSWORD_POLICY.message),
 });
 
 export default function SignupPage() {
@@ -26,8 +27,10 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(schema) });
+  const passwordValue = watch('password') || '';
 
   async function onSubmit(values) {
     setServerError('');
@@ -64,8 +67,9 @@ export default function SignupPage() {
         <Field label="Email" htmlFor="email" error={errors.email?.message}>
           <Input id="email" type="email" placeholder="name@company.com" {...register('email')} />
         </Field>
-        <Field label="Password" htmlFor="password" error={errors.password?.message} hint="Minimum 8 characters">
-          <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+        <Field label="Password" htmlFor="password" error={errors.password?.message}>
+          <PasswordInput id="password" placeholder="••••••••" {...register('password')} />
+          <PasswordChecklist value={passwordValue} />
         </Field>
 
         {serverError && (

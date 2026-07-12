@@ -117,6 +117,9 @@ async function main() {
   const roomA1 = await createAsset({ name: 'Meeting Room A1', categoryId: spaces.id, condition: 'GOOD', location: 'HQ Floor 1', isBookable: true });
   await createAsset({ name: 'Camera Kit', categoryId: electronics.id, condition: 'GOOD', location: 'Media Store', isBookable: true, acquisitionDate: daysFromNow(-120), acquisitionCost: 1500 });
 
+  // Sync the tag counter to the last tag issued so the app continues at AF-####+1.
+  await prisma.counter.update({ where: { key: 'asset_tag' }, data: { value: tagN } });
+
   // ─── Allocations (incl. one overdue) ────────────────────────
   async function allocate(asset, toUser, allocatedBy, expectedReturn, status = 'ACTIVE') {
     await prisma.allocation.create({

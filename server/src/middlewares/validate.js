@@ -12,7 +12,15 @@ function validate(schema, source = 'body') {
       }));
       return next(ApiError.badRequest('Validation failed', details));
     }
-    req[source] = result.data;
+    // Express 5 makes req.query (and req.params) getter-only, so a plain
+    // assignment is silently ignored — redefine the property so the coerced
+    // value (booleans, dates, numbers) actually replaces the raw strings.
+    Object.defineProperty(req, source, {
+      value: result.data,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
     next();
   };
 }

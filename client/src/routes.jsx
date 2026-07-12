@@ -31,6 +31,7 @@ export function AppRoutes() {
       <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
       <Route path="/signup" element={<PublicOnly><SignupPage /></PublicOnly>} />
       <Route path="/forgot-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
+      <Route path="/reset-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>

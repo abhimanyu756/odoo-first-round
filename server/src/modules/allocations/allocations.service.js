@@ -26,7 +26,9 @@ async function list({ status, assetId, toUserId, overdue } = {}) {
   if (assetId) where.assetId = assetId;
   if (toUserId) where.toUserId = toUserId;
   if (overdue) {
-    where.status = 'ACTIVE';
+    // Include rows already flagged OVERDUE by the scheduler, plus any active
+    // ones already past their expected return date.
+    where.status = { in: ['ACTIVE', 'OVERDUE'] };
     where.expectedReturnDate = { lt: new Date() };
   }
   return prisma.allocation.findMany({

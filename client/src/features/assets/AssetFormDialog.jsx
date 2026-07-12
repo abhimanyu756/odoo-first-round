@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/feedback';
+import { FilePreview, DocumentGallery } from '@/components/ui/file-preview';
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export function AssetFormDialog({ asset, onClose }) {
   const selectedCategoryId = watch('categoryId');
   const selectedCategory = (categories || []).find((c) => c.id === selectedCategoryId);
   const customFields = selectedCategory?.customFields || [];
+  const selectedFiles = watch('files');
   const pending = create.isPending || update.isPending;
 
   async function onSubmit(values) {
@@ -161,6 +163,13 @@ export function AssetFormDialog({ asset, onClose }) {
                 <span>Choose files</span>
                 <input type="file" multiple accept="image/*,application/pdf" className="hidden" {...register('files')} />
               </label>
+              <FilePreview files={selectedFiles} />
+              {isEdit && asset?.documents?.length > 0 && (
+                <div className="mt-2">
+                  <p className="mb-1 text-xs text-fg-subtle">Existing files</p>
+                  <DocumentGallery documents={asset.documents} />
+                </div>
+              )}
             </Field>
             <div className="flex items-end">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-fg">

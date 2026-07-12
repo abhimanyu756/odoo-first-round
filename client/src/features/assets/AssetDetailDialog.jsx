@@ -1,4 +1,5 @@
-import { Pencil, FileText, Image as ImageIcon } from 'lucide-react';
+import { Pencil } from 'lucide-react';
+import { DocumentGallery } from '@/components/ui/file-preview';
 import {
   Dialog,
   DialogContent,

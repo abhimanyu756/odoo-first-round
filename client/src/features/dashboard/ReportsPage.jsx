@@ -15,13 +15,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingState, ErrorState, EmptyState } from '@/components/ui/feedback';
 import { formatDate } from '@/lib/utils';
+import { useTheme } from '@/context/ThemeContext';
 import { useReports } from './api';
 
-// Theme-aligned chart tokens (single-hue per chart — CVD-safe by construction).
-const EMERALD = '#10b981';
-const INFO = '#38bdf8';
-const AXIS = '#6b7280';
-const GRID = '#2a2f39';
+// Theme-aware chart tokens (single-hue per chart — CVD-safe by construction).
+function useChartColors() {
+  const { theme } = useTheme();
+  return theme === 'light'
+    ? { emerald: '#059669', info: '#0284c7', axis: '#8a93a2', grid: '#e4e7ec' }
+    : { emerald: '#10b981', info: '#38bdf8', axis: '#6b7280', grid: '#2a2f39' };
+}
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -74,6 +77,7 @@ function Heatmap({ grid }) {
 
 export default function ReportsPage() {
   const { data, isLoading, isError, refetch } = useReports();
+  const c = useChartColors();
 
   if (isLoading) return <LoadingState label="Crunching analytics…" />;
   if (isError) return <ErrorState onRetry={refetch} />;
@@ -108,11 +112,11 @@ export default function ReportsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={data.utilizationByDepartment} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-                  <XAxis dataKey="department" tick={{ fill: AXIS, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} />
-                  <YAxis tick={{ fill: AXIS, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="allocated" name="Allocated" fill={EMERALD} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={c.grid} vertical={false} />
+                  <XAxis dataKey="department" tick={{ fill: c.axis, fontSize: 11 }} axisLine={{ stroke: c.grid }} tickLine={false} />
+                  <YAxis tick={{ fill: c.axis, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(127,127,127,0.08)' }} />
+                  <Bar dataKey="allocated" name="Allocated" fill={c.emerald} radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -129,11 +133,11 @@ export default function ReportsPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={data.maintenanceFrequency} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: AXIS, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} />
-                <YAxis tick={{ fill: AXIS, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={c.grid} vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: c.axis, fontSize: 11 }} axisLine={{ stroke: c.grid }} tickLine={false} />
+                <YAxis tick={{ fill: c.axis, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<ChartTooltip />} />
-                <Line type="monotone" dataKey="count" name="Requests" stroke={INFO} strokeWidth={2} dot={{ r: 3, fill: INFO }} />
+                <Line type="monotone" dataKey="count" name="Requests" stroke={c.info} strokeWidth={2} dot={{ r: 3, fill: c.info }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
